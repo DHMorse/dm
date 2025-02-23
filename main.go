@@ -138,8 +138,6 @@ func (e *Editor) render() {
 
 	// Move cursor to position (accounting for line number width)
 	fmt.Printf("\033[%d;%dH", e.cursorY-startLine+1, e.cursorX+5)
-
-	fmt.Printf("\033[%d;%dH", e.cursorY+1, e.cursorX+5)
 }
 
 func cleanup() {
@@ -194,9 +192,9 @@ func main() {
 			// Ask to save if modified
 			fmt.Print("\033[2J")
 			fmt.Print("\033[H")
-			fmt.Print("File has unsaved changes. Save before quitting? (y/n): ")
+			fmt.Print("File has unsaved changes. Save before quitting? (Y/n): ")
 			char, _, _ := keyboard.GetKey()
-			if char == 'y' {
+			if char != 'n' {
 				if err := editor.save(); err != nil {
 					fmt.Printf("Error saving: %v\n", err)
 					continue
