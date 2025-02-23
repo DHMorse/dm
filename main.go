@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/eiannone/keyboard"
@@ -103,18 +105,40 @@ func (e *Editor) save() error {
 }
 
 func (e *Editor) render() {
+	// Get terminal size
+	cmd := exec.Command("stty", "size")
+	cmd.Stdin = os.Stdin
+	out, _ := cmd.Output()
+	rows, _ := strconv.Atoi(strings.Split(string(out), " ")[0])
+	visibleLines := rows - 1 // Leave one line for status
+
+	// Calculate viewport
+	startLine := 0
+	if len(e.content) > visibleLines {
+		startLine = e.cursorY - visibleLines/2
+		if startLine < 0 {
+			startLine = 0
+		}
+		if startLine > len(e.content)-visibleLines {
+			startLine = len(e.content) - visibleLines
+		}
+	}
+
 	// Clear screen
 	fmt.Print("\033[2J")
 	fmt.Print("\033[H")
 
-	// Render content
-	for i, line := range e.content {
-		// Print line number in gray, right-aligned with padding
-		fmt.Printf("\033[90m%3d \033[0m", i+1)
+	// Render visible content
+	for i := 0; i < visibleLines && i+startLine < len(e.content); i++ {
+		lineNum := i + startLine
+		line := e.content[lineNum]
+		fmt.Printf("\033[90m%3d \033[0m", lineNum+1)
 		fmt.Println(string(line))
 	}
 
 	// Move cursor to position (accounting for line number width)
+	fmt.Printf("\033[%d;%dH", e.cursorY-startLine+1, e.cursorX+5)
+
 	fmt.Printf("\033[%d;%dH", e.cursorY+1, e.cursorX+5)
 }
 
