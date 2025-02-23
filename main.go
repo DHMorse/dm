@@ -108,12 +108,14 @@ func (e *Editor) render() {
 	fmt.Print("\033[H")
 
 	// Render content
-	for _, line := range e.content {
+	for i, line := range e.content {
+		// Print line number in gray, right-aligned with padding
+		fmt.Printf("\033[90m%3d \033[0m", i+1)
 		fmt.Println(string(line))
 	}
 
-	// Move cursor to position
-	fmt.Printf("\033[%d;%dH", e.cursorY+1, e.cursorX+1)
+	// Move cursor to position (accounting for line number width)
+	fmt.Printf("\033[%d;%dH", e.cursorY+1, e.cursorX+5)
 }
 
 func cleanup() {
