@@ -151,7 +151,7 @@ func cleanup() {
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Println("Usage: editor <filename>")
+		fmt.Println("Usage: dm <filename>")
 		os.Exit(1)
 	}
 
@@ -170,9 +170,6 @@ func main() {
 	// Set up proper terminal cleanup
 	defer cleanup()
 
-	// Hide cursor during editing
-	//fmt.Print("\033[?25l")
-
 	for {
 		editor.render()
 
@@ -187,20 +184,36 @@ func main() {
 			if !editor.modified {
 				return
 			}
-			// Show cursor for the prompt
-			fmt.Print("\033[?25h")
 			// Ask to save if modified
 			fmt.Print("\033[2J")
 			fmt.Print("\033[H")
-			fmt.Print("File has unsaved changes. Save before quitting? (Y/n): ")
-			char, _, _ := keyboard.GetKey()
-			if char != 'n' {
-				if err := editor.save(); err != nil {
-					fmt.Printf("Error saving: %v\n", err)
-					continue
+			fmt.Print("File has unsaved changes. Save before quitting? (y/n): ")
+			var response string
+			for {
+				char, key, _ := keyboard.GetKey()
+				if key == keyboard.KeyEnter {
+					if response == "y" {
+						if err := editor.save(); err != nil {
+							fmt.Printf("Error saving: %v\n", err)
+							continue
+						}
+						return
+					} else if response == "n" {
+						return
+					}
+					// Invalid input, ask again
+					fmt.Print("\nPlease enter 'y' or 'n': ")
+					response = ""
+				} else if key == keyboard.KeyBackspace || key == keyboard.KeyBackspace2 {
+					if len(response) > 0 {
+						response = response[:len(response)-1]
+						fmt.Print("\b \b") // Move back, clear character, move back again
+					}
+				} else if char != 0 {
+					response += string(char)
+					fmt.Print(string(char))
 				}
 			}
-			return
 		case keyboard.KeyCtrlS:
 			if err := editor.save(); err != nil {
 				fmt.Printf("Error saving: %v\n", err)
